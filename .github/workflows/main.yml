@@ -1,0 +1,80 @@
+# Данный workflow записывает файловую структуру виртуальных окружений GitHub в файлы и отправляет в репозиторий
+
+# Отображаемое имя workflow
+# https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#name
+name: Запусти меня
+
+# Запускается вручную
+on: workflow_dispatch
+
+jobs:
+
+  # Идентификатор job
+  # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_id
+  windows-latest:
+
+    # Будет запущен на виртуальной машине с последней версией Windows
+    # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    runs-on: windows-latest
+
+    # Последовательность задач
+    # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idsteps
+    steps:
+
+    - name: Работаем # Отображаемое имя step
+
+      run: |
+
+        # Отображаем все файлы
+        tree c: /f /a >windows-latest-c.txt 2>&1
+        tree d: /f /a >windows-latest-d.txt 2>&1
+
+        # Качаем текущий репозиторий с возможностью записи в него
+        # https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#github-context
+        git clone https://x-access-token:${{github.token}}@github.com/${{github.repository}} repo
+
+        # Переходим в папку репозитория, чтобы текстовый файл создавался прямо в ней
+        cd repo
+
+        # Показываем все диски
+        wmic logicaldisk >windows-latest-disks.txt 2>&1
+
+        # В репозитории нельзя хранить большие файлы, архивируем и удаляем json
+        7z a windows-latest-c.zip ../windows-latest-c.txt
+        7z a windows-latest-d.zip ../windows-latest-d.txt
+
+        # Автор коммита
+        git config --global user.email "[бот]@users.noreply.github.com"
+        git config --global user.name "[бот]"
+
+        # Создаём коммит с изменениями
+        git add -A
+        git commit -m "Update (windows-latest)"
+
+        # Отправляем коммит на сервер
+        git push origin master
+
+  ubuntu-latest:
+
+    # Будет запущен на виртуальной машине с последней версией Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Работаем
+
+      run: |
+
+        git clone https://x-access-token:${{github.token}}@github.com/${{github.repository}} repo
+
+        cd repo
+
+        #tree / >linux-latest.txt
+
+        git config --global user.email "[бот]@users.noreply.github.com"
+        git config --global user.name "[бот]"
+
+        git add -A
+        git commit -m "Update (ubuntu-latest)"
+
+        git push origin master
